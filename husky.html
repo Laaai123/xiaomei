@@ -1,134 +1,113 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="utf-8" />
-  <title>哈士奇 AR 影片互動</title>
-  <!-- 載入 A-Frame 與 MindAR -->
+  <meta charset="UTF-8" />
+  <title>哈士奇 AR 互動展示</title>
+  <!-- 載入 A-Frame 和 MindAR -->
   <script src="https://cdn.jsdelivr.net/npm/aframe@1.4.2/dist/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
   <style>
-    html, body {
-      margin: 0;
-      padding: 0;
-      overflow: hidden;
-      width: 100%;
-      height: 100%;
-    }
-    a-scene {
+    body { margin: 0; overflow: hidden; }
+    #infoButton {
       position: absolute;
-      width: 100%;
-      height: 100%;
-    }
-    #infoBtn, #dogInfo {
-      display: none;
-      position: absolute;
-      z-index: 10;
-    }
-    #infoBtn {
-      bottom: 60px;
+      bottom: 20px;
       left: 20px;
-      padding: 10px 15px;
-      background: #4CAF50;
+      padding: 12px 20px;
+      background-color: #2196F3;
       color: white;
       border: none;
       border-radius: 5px;
-      cursor: pointer;
-    }
-    #dogInfo {
-      bottom: 20px;
-      left: 20px;
-      background: rgba(255, 255, 255, 0.95);
-      padding: 10px;
-      border-radius: 5px;
-      width: 280px;
       font-size: 16px;
-      color: #222;
+      z-index: 10;
+      display: none;
+    }
+    #infoBox {
+      position: absolute;
+      bottom: 80px;
+      left: 20px;
+      background-color: rgba(255,255,255,0.95);
+      padding: 10px 15px;
+      border-radius: 8px;
+      font-size: 16px;
+      color: #000;
+      z-index: 10;
+      display: none;
+      width: 280px;
     }
   </style>
 </head>
 <body>
+  <!-- 互動按鈕與資訊區塊 -->
+  <button id="infoButton">顯示狗狗資訊</button>
+  <div id="infoBox"><strong>哈士奇</strong><p>活潑雪橇犬，喜歡奔跑和玩耍。</p></div>
 
-<!-- 按鈕與資訊 -->
-<button id="infoBtn">顯示狗狗資訊</button>
-<div id="dogInfo"></div>
+  <!-- AR 場景設定 -->
+  <a-scene
+    mindar-image="imageTargetSrc: husky.mind; autoStart: true; uiScanning: true;"
+    color-space="sRGB"
+    renderer="colorManagement: true; physicallyCorrectLights: true"
+    vr-mode-ui="enabled: false"
+    device-orientation-permission-ui="enabled: false"
+    embedded
+    style="width: 100vw; height: 100vh;"
+  >
+    <a-assets>
+      <!-- 放影片 -->
+      <video id="huskyVid" src="husky.mp4" preload="auto" loop muted playsinline></video>
+    </a-assets>
 
-<!-- A-Frame AR 場景 -->
-<a-scene
-  mindar-image="imageTargetSrc: husky.mind; autoStart: true; uiScanning: true;"
-  color-space="sRGB"
-  renderer="colorManagement: true; physicallyCorrectLights: true"
-  vr-mode-ui="enabled: false"
-  device-orientation-permission-ui="enabled: false"
-  embedded
->
-  <!-- 資源：影片 -->
-  <a-assets>
-    <video id="introVid" src="husky.mp4" preload="auto" loop muted playsinline webkit-playsinline></video>
-  </a-assets>
+    <a-light type="ambient" intensity="1.5"></a-light>
+    <a-camera position="0 0 0" look-controls="enabled: false" camera="facingMode: environment"></a-camera>
 
-  <!-- 燈光 -->
-  <a-light type="ambient" intensity="1.5"></a-light>
+    <a-entity mindar-image-target="targetIndex: 0">
+      <a-video
+        id="videoEntity"
+        src="#huskyVid"
+        width="1.2" height="0.675"  <!-- 16:9 畫面比例 -->
+        position="0 0 0"
+        autoplay="false"
+        loop="true"
+        material="shader: flat"
+      ></a-video>
+    </a-entity>
+  </a-scene>
 
-  <!-- 相機 -->
-  <a-camera look-controls="enabled: false"></a-camera>
+  <!-- 播放控制與資訊互動邏輯 -->
+  <script>
+    const video = document.querySelector("#huskyVid");
+    const videoPlane = document.querySelector("#videoEntity");
+    const target = document.querySelector("a-entity[mindar-image-target]");
+    const btn = document.getElementById("infoButton");
+    const info = document.getElementById("infoBox");
 
-  <!-- 圖卡目標出現時顯示影片 -->
-  <a-entity mindar-image-target="targetIndex: 0">
-    <a-video
-      id="videoEntity"
-      src="#introVid"
-      width="1.2" height="0.7"
-      position="0 0 0"
-      autoplay="false"
-      loop="true"
-      material="shader: flat"
-    ></a-video>
-  </a-entity>
-</a-scene>
+    // 點擊影片切換播放 / 暫停
+    videoPlane.addEventListener("click", () => {
+      if (video.paused) {
+        video.play();
+      } else {
+        video.pause();
+      }
+    });
 
-<!-- JS 控制 -->
-<script>
-  const video = document.querySelector('#introVid');
-  const videoPlane = document.querySelector('#videoEntity');
-  const targetEntity = document.querySelector('a-entity[mindar-image-target]');
-  const infoBtn = document.getElementById('infoBtn');
-  const dogInfo = document.getElementById('dogInfo');
-
-  const dogData = {
-    name: "哈士奇",
-    desc: "暱稱二哈、月月，是北方地區雪橇型犬的總稱，他們的快速拉動的風格與其他雪橇犬不同。 他們是由速度最快的雪橇犬不斷交配的犬種。相比之下，阿拉斯加雪橇犬是「最大和最有力的」雪橇犬，常被用於較重的承載。哈士奇被用於雪橇犬拉車比賽。"
-  };
-
-  // 點擊影片平面播放/暫停
-  videoPlane.addEventListener('click', () => {
-    if (video.paused) {
+    // 掃描到圖片
+    target.addEventListener("targetFound", () => {
       video.play();
-    } else {
+      btn.style.display = "block";
+      info.style.display = "none";
+    });
+
+    // 圖片掃描消失
+    target.addEventListener("targetLost", () => {
       video.pause();
-    }
-  });
+      video.currentTime = 0;
+      btn.style.display = "none";
+      info.style.display = "none";
+    });
 
-  // 掃描到圖卡時
-  targetEntity.addEventListener('targetFound', () => {
-    video.play();
-    infoBtn.style.display = 'inline-block';
-    dogInfo.style.display = 'none';
-  });
-
-  // 掃描圖卡消失時
-  targetEntity.addEventListener('targetLost', () => {
-    video.pause();
-    video.currentTime = 0;
-    infoBtn.style.display = 'none';
-    dogInfo.style.display = 'none';
-  });
-
-  // 顯示狗狗資訊
-  infoBtn.addEventListener('click', () => {
-    dogInfo.innerHTML = `<strong>${dogData.name}</strong><p>${dogData.desc}</p>`;
-    dogInfo.style.display = 'block';
-  });
-</script>
-
+    // 按下按鈕顯示資訊
+    btn.onclick = () => {
+      info.style.display = info.style.display === "none" ? "block" : "none";
+    };
+  </script>
 </body>
 </html>

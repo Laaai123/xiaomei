@@ -1,87 +1,116 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html>
 <head>
-  <meta charset="UTF-8" />
-  <title>哈士奇 AR 辨識互動 (後置鏡頭)</title>
-  <script src="https://cdn.jsdelivr.net/npm/aframe@1.5.0/dist/aframe.min.js"></script>
+  <meta charset="utf-8" />
+  <title>多狗狗 AR 辨識互動</title>
+  <script src="https://cdn.jsdelivr.net/npm/aframe@1.4.2/dist/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
   <style>
-    #dogVideo, #infoBtn, #dogInfo {
-      display: none;
-      position: absolute;
-      z-index: 10;
-    }
-    #dogVideo {
-      bottom: 100px;
-      left: 20px;
-      width: 300px;
-      border: 2px solid #333;
-      border-radius: 8px;
+    body { margin: 0; overflow: hidden; }
+    #infoBox, #infoBtn {
+      position: absolute; z-index: 10; display: none;
     }
     #infoBtn {
-      bottom: 60px;
-      left: 20px;
-      padding: 10px;
-      background:#4CAF50;
-      color:#fff;
-      border:none;
-      border-radius:5px;
-      cursor: pointer;
+      bottom: 60px; left: 20px;
+      padding: 10px; background: #4CAF50; color: #fff;
+      border: none; border-radius: 5px; cursor: pointer;
     }
-    #dogInfo {
-      bottom: 20px;
-      left: 20px;
-      background: rgba(255,255,255,0.9);
-      padding: 10px;
-      border-radius: 5px;
-      width: 300px;
-      font-size: 16px;
-      color: #222;
+    #infoBox {
+      bottom: 20px; left: 20px;
+      background: rgba(255,255,255,0.9); padding: 10px;
+      border-radius: 5px; width: 300px; color: #222;
     }
   </style>
 </head>
 <body>
-  <video id="dogVideo" controls playsinline></video>
-  <button id="infoBtn">顯示狗狗資訊</button>
-  <div id="dogInfo"></div>
+
+<!-- 按鈕與資訊區 -->
+<button id="infoBtn">顯示狗狗資訊</button>
+<div id="infoBox"></div>
+
+<!-- A-Frame 場景 -->
+<a-scene
+  mindar-image="imageTargetSrc: husky.mind; autoStart: true; uiScanning: true;"
+  embedded
+  color-space="sRGB"
+  renderer="colorManagement: true; physicallyCorrectLights: true"
+  vr-mode-ui="enabled: false"
+  device-orientation-permission-ui="enabled: false">
+
+  <!-- 後置鏡頭 -->
+  <a-camera look-controls="enabled: false" camera="facingMode: environment"></a-camera>
+
+  <!-- 資源 -->
+  <a-assets>
+    <video id="huskyVid" src="husky.mp4" preload="auto" loop></video>
+    <video id="shibaVid" src="dog2.mp4" preload="auto" loop></video>
+    <video id="chihuahuaVid" src="dog3.mp4" preload="auto" loop></video>
+  </a-assets>
+
+  <!-- 哈士奇 -->
+  <a-entity mindar-image-target="targetIndex: 0">
+    <a-video id="huskyVideoPlane" src="#huskyVid" width="1" height="0.6" position="0 0 0" material="shader: flat"></a-video>
+  </a-entity>
+
+  <!-- 柴犬（第二個場景） -->
   <a-scene
-    mindar-image="imageTargetSrc: ./husky.mind; filtered: false; maxTrack: 1;"
-    vr-mode-ui="enabled: false"
-    device-orientation-permission-ui="enabled: false"
+    mindar-image="imageTargetSrc: dog2.mind; autoStart: true; uiScanning: false;"
     embedded>
-    <a-camera position="0 0 0" camera="facingMode: environment"></a-camera>
-    <a-entity mindar-image-target="targetIndex: 0"></a-entity>
+    <a-camera look-controls="enabled: false" camera="facingMode: environment"></a-camera>
+    <a-entity mindar-image-target="targetIndex: 0">
+      <a-video id="shibaVideoPlane" src="#shibaVid" width="1" height="0.6" position="0 0 0" material="shader: flat"></a-video>
+    </a-entity>
   </a-scene>
-  <script>
-    const dogData = {
-      name: "哈士奇",
-      desc: "活潑雪橇犬，喜歡奔跑和玩耍。",
-      video: "husky.mp4"
-    };
-    const video = document.getElementById("dogVideo");
-    const btn = document.getElementById("infoBtn");
-    const info = document.getElementById("dogInfo");
-    document.addEventListener("DOMContentLoaded", () => {
-      const scene = document.querySelector("a-scene").components["mindar-image"];
-      scene.start();
-      scene.el.addEventListener("targetFoundIndex0", () => {
-        video.src = dogData.video;
-        video.style.display = "block";
-        video.play();
-        btn.style.display = "inline-block";
-        info.style.display = "none";
-        btn.onclick = () => {
-          info.innerHTML = `<strong>${dogData.name}</strong><p>${dogData.desc}</p>`;
-          info.style.display = "block";
-        };
-      });
-      scene.el.addEventListener("targetLostIndex0", () => {
-        video.pause();
-        video.style.display = "none";
-        btn.style.display = "none";
-        info.style.display = "none";
-      });
+
+  <!-- 吉娃娃（第三個場景） -->
+  <a-scene
+    mindar-image="imageTargetSrc: dog3.mind; autoStart: true; uiScanning: false;"
+    embedded>
+    <a-camera look-controls="enabled: false" camera="facingMode: environment"></a-camera>
+    <a-entity mindar-image-target="targetIndex: 0">
+      <a-video id="chihuahuaVideoPlane" src="#chihuahuaVid" width="1" height="0.6" position="0 0 0" material="shader: flat"></a-video>
+    </a-entity>
+  </a-scene>
+
+</a-scene>
+
+<!-- 控制邏輯 -->
+<script>
+  const infoBtn = document.getElementById("infoBtn");
+  const infoBox = document.getElementById("infoBox");
+
+  const dogInfos = {
+    husky: { name: "哈士奇", desc: "活潑雪橇犬，喜歡奔跑和玩耍。" },
+    shiba: { name: "柴犬", desc: "傲嬌日本犬，勇敢又固執。" },
+    chihuahua: { name: "吉娃娃", desc: "世界最小的狗，活潑又有警覺性。" }
+  };
+
+  const setupVideo = (target, videoEl, key) => {
+    const video = videoEl;
+    const targetEntity = target;
+
+    targetEntity.addEventListener("targetFound", () => {
+      video.play();
+      infoBtn.style.display = "block";
+      infoBtn.onclick = () => {
+        infoBox.innerHTML = `<strong>${dogInfos[key].name}</strong><p>${dogInfos[key].desc}</p>`;
+        infoBox.style.display = "block";
+      };
     });
-  </script>
+
+    targetEntity.addEventListener("targetLost", () => {
+      video.pause();
+      video.currentTime = 0;
+      infoBtn.style.display = "none";
+      infoBox.style.display = "none";
+    });
+  };
+
+  window.addEventListener("DOMContentLoaded", () => {
+    setupVideo(document.querySelector("#huskyVideoPlane").parentNode, document.querySelector("#huskyVid"), "husky");
+    setupVideo(document.querySelector("#shibaVideoPlane").parentNode, document.querySelector("#shibaVid"), "shiba");
+    setupVideo(document.querySelector("#chihuahuaVideoPlane").parentNode, document.querySelector("#chihuahuaVid"), "chihuahua");
+  });
+</script>
 </body>
 </html>

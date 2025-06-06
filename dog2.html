@@ -1,116 +1,108 @@
 <!DOCTYPE html>
-<html>
+<html lang="zh-TW">
 <head>
-  <meta charset="utf-8" />
-  <title>多狗狗 AR 辨識互動</title>
+  <meta charset="UTF-8" />
+  <title>柴犬 狗狗介紹💕</title>
+  <!-- 載入 A-Frame 和 MindAR -->
   <script src="https://cdn.jsdelivr.net/npm/aframe@1.4.2/dist/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
   <style>
     body { margin: 0; overflow: hidden; }
-    #infoBox, #infoBtn {
-      position: absolute; z-index: 10; display: none;
-    }
-    #infoBtn {
-      bottom: 60px; left: 20px;
-      padding: 10px; background: #4CAF50; color: #fff;
-      border: none; border-radius: 5px; cursor: pointer;
+    #infoButton {
+      position: absolute;
+      bottom: 20px;
+      left: 20px;
+      padding: 12px 20px;
+      background-color: #2196F3;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      z-index: 10;
+      display: none;
     }
     #infoBox {
-      bottom: 20px; left: 20px;
-      background: rgba(255,255,255,0.9); padding: 10px;
-      border-radius: 5px; width: 300px; color: #222;
+      position: absolute;
+      bottom: 80px;
+      left: 20px;
+      background-color: rgba(255,255,255,0.95);
+      padding: 10px 15px;
+      border-radius: 8px;
+      font-size: 16px;
+      color: #000;
+      z-index: 10;
+      display: none;
+      width: 280px;
     }
   </style>
 </head>
 <body>
+  <!-- 互動按鈕與資訊區塊 -->
+  <button id="infoButton">主人點點我</button>
+  <div id="infoBox"><strong>✨柴犬</strong><p>📢日本犬種之一。屬於中小型犬種。柴犬於1936年（12月16日被指定為日本的天然紀念物，亦是現存六種日本犬中其中一種小型犬。根據日本犬保存會，日本境內飼養的日本本土犬種裡，約有八成為柴犬。柴犬面貌與秋田犬相似，也因此兩者經常被搞混。細分的話，秋田臉較柴犬圓，柴犬的耳朵與嘴較秋田尖，不過兩者最明顯的差別是體型，柴犬比秋田明顯嬌小可愛。</p></div>
 
-<!-- 按鈕與資訊區 -->
-<button id="infoBtn">顯示狗狗資訊</button>
-<div id="infoBox"></div>
-
-<!-- A-Frame 場景 -->
-<a-scene
-  mindar-image="imageTargetSrc: husky.mind; autoStart: true; uiScanning: true;"
-  embedded
-  color-space="sRGB"
-  renderer="colorManagement: true; physicallyCorrectLights: true"
-  vr-mode-ui="enabled: false"
-  device-orientation-permission-ui="enabled: false">
-
-  <!-- 後置鏡頭 -->
-  <a-camera look-controls="enabled: false" camera="facingMode: environment"></a-camera>
-
-  <!-- 資源 -->
-  <a-assets>
-    <video id="huskyVid" src="husky.mp4" preload="auto" loop></video>
-    <video id="shibaVid" src="dog2.mp4" preload="auto" loop></video>
-    <video id="chihuahuaVid" src="dog3.mp4" preload="auto" loop></video>
-  </a-assets>
-
-  <!-- 哈士奇 -->
-  <a-entity mindar-image-target="targetIndex: 0">
-    <a-video id="huskyVideoPlane" src="#huskyVid" width="1" height="0.6" position="0 0 0" material="shader: flat"></a-video>
-  </a-entity>
-
-  <!-- 柴犬（第二個場景） -->
+  <!-- AR 場景設定 -->
   <a-scene
-    mindar-image="imageTargetSrc: dog2.mind; autoStart: true; uiScanning: false;"
-    embedded>
-    <a-camera look-controls="enabled: false" camera="facingMode: environment"></a-camera>
+    mindar-image="imageTargetSrc: dog2.mind; autoStart: true; uiScanning: true;"
+    color-space="sRGB"
+    renderer="colorManagement: true; physicallyCorrectLights: true"
+    vr-mode-ui="enabled: false"
+    device-orientation-permission-ui="enabled: false"
+    embedded
+    style="width: 100vw; height: 100vh;"
+  >
+    <a-assets>
+      <!-- 放影片 -->
+      <video id="dog2Vid" src="dog2.mp4" preload="auto" loop muted playsinline></video>
+    </a-assets>
+
+    <a-light type="ambient" intensity="1.5"></a-light>
+    <a-camera position="0 0 0" look-controls="enabled: false" camera="facingMode: environment"></a-camera>
+
     <a-entity mindar-image-target="targetIndex: 0">
-      <a-video id="shibaVideoPlane" src="#shibaVid" width="1" height="0.6" position="0 0 0" material="shader: flat"></a-video>
+      <a-video
+        id="videoEntity"
+        src="#huskyVid"
+        width="1.2" height="0.675"  <!-- 16:9 畫面比例 -->
+       </a-video>
     </a-entity>
   </a-scene>
 
-  <!-- 吉娃娃（第三個場景） -->
-  <a-scene
-    mindar-image="imageTargetSrc: dog3.mind; autoStart: true; uiScanning: false;"
-    embedded>
-    <a-camera look-controls="enabled: false" camera="facingMode: environment"></a-camera>
-    <a-entity mindar-image-target="targetIndex: 0">
-      <a-video id="chihuahuaVideoPlane" src="#chihuahuaVid" width="1" height="0.6" position="0 0 0" material="shader: flat"></a-video>
-    </a-entity>
-  </a-scene>
+  <!-- 播放控制與資訊互動邏輯 -->
+  <script>
+    const video = document.querySelector("#huskyVid");
+    const videoPlane = document.querySelector("#videoEntity");
+    const target = document.querySelector("a-entity[mindar-image-target]");
+    const btn = document.getElementById("infoButton");
+    const info = document.getElementById("infoBox");
 
-</a-scene>
-
-<!-- 控制邏輯 -->
-<script>
-  const infoBtn = document.getElementById("infoBtn");
-  const infoBox = document.getElementById("infoBox");
-
-  const dogInfos = {
-    husky: { name: "哈士奇", desc: "活潑雪橇犬，喜歡奔跑和玩耍。" },
-    shiba: { name: "柴犬", desc: "傲嬌日本犬，勇敢又固執。" },
-    chihuahua: { name: "吉娃娃", desc: "世界最小的狗，活潑又有警覺性。" }
-  };
-
-  const setupVideo = (target, videoEl, key) => {
-    const video = videoEl;
-    const targetEntity = target;
-
-    targetEntity.addEventListener("targetFound", () => {
-      video.play();
-      infoBtn.style.display = "block";
-      infoBtn.onclick = () => {
-        infoBox.innerHTML = `<strong>${dogInfos[key].name}</strong><p>${dogInfos[key].desc}</p>`;
-        infoBox.style.display = "block";
-      };
+    // 點擊影片切換播放 / 暫停
+    videoPlane.addEventListener("click", () => {
+      if (video.paused) {
+        video.play();
+      } else {
+        video.pause();
+      }
     });
 
-    targetEntity.addEventListener("targetLost", () => {
+    // 掃描到圖片
+    target.addEventListener("targetFound", () => {
+      video.play();
+      btn.style.display = "block";
+      info.style.display = "none";
+    });
+
+    // 圖片掃描消失
+    target.addEventListener("targetLost", () => {
       video.pause();
       video.currentTime = 0;
-      infoBtn.style.display = "none";
-      infoBox.style.display = "none";
+      btn.style.display = "none";
+      info.style.display = "none";
     });
-  };
-
-  window.addEventListener("DOMContentLoaded", () => {
-    setupVideo(document.querySelector("#huskyVideoPlane").parentNode, document.querySelector("#huskyVid"), "husky");
-    setupVideo(document.querySelector("#shibaVideoPlane").parentNode, document.querySelector("#shibaVid"), "shiba");
-    setupVideo(document.querySelector("#chihuahuaVideoPlane").parentNode, document.querySelector("#chihuahuaVid"), "chihuahua");
-  });
-</script>
+    // 按下按鈕顯示資訊
+    btn.onclick = () => {
+      info.style.display = info.style.display === "none" ? "block" : "none";
+    };
+  </script>
 </body>
 </html>

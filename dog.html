@@ -2,58 +2,68 @@
 <html>
 <head>
   <meta charset="UTF-8">
-  <title>掃描狗狗圖片 AR 系統</title>
-  <script src="https://unpkg.com/mind-ar@1.1.4/dist/mindar-image.prod.js"></script>
+  <title>狗狗 AR 辨識互動</title>
+  <script src="https://cdn.jsdelivr.net/npm/aframe@1.5.0/dist/aframe.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
   <style>
-    body { margin: 0; overflow: hidden; font-family: Arial; }
-    #infoBtn { display: none; position: absolute; bottom: 20px; left: 20px; padding: 10px; background: #4CAF50; color: #fff; border: none; border-radius: 5px; }
-    #dogInfo { display: none; position: absolute; bottom: 60px; left: 20px; background: rgba(255,255,255,0.8); padding: 10px; border-radius: 5px; }
+    #dogVideo, #infoBtn, #dogInfo { display: none; position: absolute; }
+    #dogVideo { bottom: 100px; left: 20px; width: 300px; }
+    #infoBtn { bottom: 60px; left: 20px; padding: 10px; background:#4CAF50; color:#fff; border:none; border-radius:5px; }
+    #dogInfo { bottom: 20px; left:20px; background:rgba(255,255,255,0.8); padding:10px; border-radius:5px; }
   </style>
 </head>
 <body>
-  <video id="dogVideo" width="300" controls style="position:absolute; bottom:120px; left:20px; display:none;"></video>
+  <video id="dogVideo" controls></video>
   <button id="infoBtn">顯示狗狗資訊</button>
   <div id="dogInfo"></div>
 
+  <a-scene mindar-image="imageTargetSrc: ./targets.mind; filtered: false;"
+           vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
+    <a-camera position="0 0 0"></a-camera>
+
+    <!-- 預設不顯示，只用來觸發事件 -->
+    <a-entity mindar-image-target="targetIndex: 0"></a-entity>
+    <a-entity mindar-image-target="targetIndex: 1"></a-entity>
+    <a-entity mindar-image-target="targetIndex: 2"></a-entity>
+    <a-entity mindar-image-target="targetIndex: 3"></a-entity>
+    <a-entity mindar-image-target="targetIndex: 4"></a-entity>
+    <a-entity mindar-image-target="targetIndex: 5"></a-entity>
+    <a-entity mindar-image-target="targetIndex: 6"></a-entity>
+  </a-scene>
+
   <script>
-    const dogData = {
-      husky: { name: "哈士奇", desc: "北極雪橇犬，活潑有型。", video: "husky.mp4" },
-      dog2:  { name: "柴犬", desc: "日本品種，個性傲嬌。", video: "dog2.mp4" },
-      dog3:  { name: "吉娃娃", desc: "迷你玩伴，小隻精。", video: "dog3.mp4" },
-      beagle:{ name: "比格犬", desc: "嗅覺敏銳，活力足。", video: "beagle.mp4" },
-      doberman:{name:"杜賓狗", desc:"護衛犬種，敏捷強壯。", video:"doberman.mp4" },
-      golden:{name:"黃金獵犬", desc:"溫和友善，適合家庭。", video:"golden.mp4" },
-      mix:   { name: "迷克斯", desc: "混種犬，多樣性格。", video: "mix.mp4" }
-    };
+    const dogData = [
+      { key: "husky", name: "哈士奇", desc: "活潑雪橇犬", video:"husky.mp4" },
+      { key:"dog2", name:"柴犬", desc:"傲嬌日本犬", video:"dog2.mp4" },
+      { key:"dog3", name:"吉娃娃", desc:"迷你玩伴", video:"dog3.mp4" },
+      { key:"beagle", name:"比格犬", desc:"嗅覺敏銳", video:"beagle.mp4" },
+      { key:"doberman", name:"杜賓狗", desc:"護衛犬", video:"doberman.mp4" },
+      { key:"golden", name:"黃金獵犬", desc:"家庭犬", video:"golden.mp4" },
+      { key:"mix", name:"迷克斯", desc:"混種犬", video:"mix.mp4" }
+    ];
 
-    document.addEventListener("DOMContentLoaded", async () => {
-      const mindar = new window.MINDAR.IMAGE.MindARThree({ container: document.body, imageTargetSrc: 'hungry_and_others.mind' });
-      const { renderer, camera, scene } = mindar;
-      await mindar.start();
+    const video = document.getElementById("dogVideo");
+    const btn = document.getElementById("infoBtn");
+    const info = document.getElementById("dogInfo");
 
-      mindar.onTargetFound = ({ index }) => {
-        const key = Object.keys(dogData)[index];
-        const dog = dogData[key];
-        const video = document.getElementById("dogVideo");
-        const infoBtn = document.getElementById("infoBtn");
-        const dogInfo = document.getElementById("dogInfo");
+    document.addEventListener("DOMContentLoaded", () => {
+      const scene = document.querySelector("a-scene").components["mindar-image"];
+      scene.start();
 
-        video.src = dog.video; video.style.display = "block";
-        infoBtn.style.display = "inline-block";
-        infoBtn.onclick = () => {
-          dogInfo.innerHTML = `<strong>${dog.name}</strong><p>${dog.desc}</p>`;
-          dogInfo.style.display = "block";
-        };
-      };
-
-      mindar.onTargetLost = () => {
-        document.getElementById("dogVideo").style.display = "none";
-        document.getElementById("infoBtn").style.display = "none";
-        document.getElementById("dogInfo").style.display = "none";
-      };
-
-      renderer.setAnimationLoop(() => {
-        renderer.render(scene, camera);
+      dogData.forEach((dog, idx) => {
+        scene.el.addEventListener(`targetFoundIndex${idx}`, () => {
+          video.src = dog.video; video.style.display = "block";
+          btn.style.display = "inline-block";
+          btn.onclick = () => {
+            info.innerHTML = `<strong>${dog.name}</strong><p>${dog.desc}</p>`;
+            info.style.display = "block";
+          };
+        });
+        scene.el.addEventListener(`targetLostIndex${idx}`, () => {
+          video.style.display = "none";
+          btn.style.display = "none";
+          info.style.display = "none";
+        });
       });
     });
   </script>

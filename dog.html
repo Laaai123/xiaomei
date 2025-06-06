@@ -2,125 +2,92 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>小狗即時辨識系統</title>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet"></script>
+  <title>狗狗互動展示</title>
   <style>
     body {
-      font-family: Arial, sans-serif;
       text-align: center;
-      background-color: #f0f0f5;
-      padding: 20px;
+      font-family: Arial;
     }
-    video, canvas {
-      width: 100%;
-      max-width: 400px;
+    .dog-image {
+      width: 200px;
+      margin: 10px;
+      cursor: pointer;
+      border: 3px solid transparent;
       border-radius: 10px;
-      margin-top: 15px;
     }
-    button {
-      padding: 10px 20px;
+    .dog-image:hover {
+      border-color: #4CAF50;
+    }
+    #dogVideo {
+      width: 300px;
+      display: none;
+      margin-top: 20px;
+    }
+    #infoBtn {
+      display: none;
       margin-top: 15px;
+      padding: 10px 20px;
       font-size: 16px;
       background-color: #4CAF50;
       color: white;
       border: none;
       border-radius: 5px;
-      cursor: pointer;
     }
     #dogInfo {
-      margin-top: 20px;
+      margin-top: 15px;
       font-size: 18px;
-      color: #333;
     }
   </style>
 </head>
 <body>
-  <h1>📷 小狗即時辨識系統</h1>
-  <video id="webcam" autoplay playsinline></video>
+  <h1>點選狗狗圖片開始互動！</h1>
+
+  <img src="husky.jpg" class="dog-image" data-breed="husky">
+  <img src="golden.jpg" class="dog-image" data-breed="golden">
+  <img src="labrador.jpg" class="dog-image" data-breed="labrador">
+
+  <video id="dogVideo" controls></video>
   <br>
-  <button id="captureBtn">掃描小狗圖片</button>
-
-  <div id="interactionArea" style="display: none;">
-    <video id="dogVideo" controls style="margin-top: 20px;"></video>
-    <br>
-    <button id="infoBtn">顯示狗狗資訊</button>
-    <div id="dogInfo"></div>
-  </div>
-
-  <canvas id="canvas" width="224" height="224" style="display: none;"></canvas>
+  <button id="infoBtn">顯示狗狗資訊</button>
+  <div id="dogInfo"></div>
 
   <script>
-    let model;
-    const video = document.getElementById('webcam');
-    const canvas = document.getElementById('canvas');
-    const ctx = canvas.getContext('2d');
-    const interactionArea = document.getElementById('interactionArea');
-    const dogInfoDiv = document.getElementById('dogInfo');
-    const dogVideo = document.getElementById('dogVideo');
-
-    // 模型資料庫
     const dogData = {
-      "siberian husky": {
+      husky: {
         name: "哈士奇",
-        description: "哈士奇，又稱二哈，是來自北方的雪橇犬，性格活潑有趣。",
+        description: "哈士奇是一種來自北極地區的雪橇犬，個性活潑、外貌俊俏。",
         video: "husky.mp4"
       },
-      "golden retriever": {
+      golden: {
         name: "黃金獵犬",
-        description: "黃金獵犬溫馴聰明，常作為導盲犬和家庭犬。",
+        description: "黃金獵犬溫馴聰明，是很受家庭喜愛的犬種。",
         video: "golden.mp4"
       },
-      "labrador retriever": {
+      labrador: {
         name: "拉布拉多",
-        description: "拉布拉多是非常友善、聽話的狗狗，工作能力也強。",
+        description: "拉布拉多是非常友善、服從力強的狗，常被訓練成導盲犬。",
         video: "labrador.mp4"
       }
     };
 
-    // 啟用相機
-    async function initCamera() {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      video.srcObject = stream;
-    }
+    const dogVideo = document.getElementById('dogVideo');
+    const infoBtn = document.getElementById('infoBtn');
+    const dogInfo = document.getElementById('dogInfo');
 
-    async function loadModel() {
-      model = await mobilenet.load();
-      console.log("模型載入成功！");
-    }
+    document.querySelectorAll('.dog-image').forEach(img => {
+      img.addEventListener('click', () => {
+        const breed = img.dataset.breed;
+        const dog = dogData[breed];
 
-    // 辨識圖片
-    document.getElementById("captureBtn").addEventListener("click", async () => {
-      ctx.drawImage(video, 0, 0, 224, 224);
-      const imageData = tf.browser.fromPixels(canvas);
-      const predictions = await model.classify(imageData);
-      imageData.dispose();
-
-      const topPrediction = predictions[0].className.toLowerCase();
-      console.log("辨識結果:", topPrediction);
-
-      let foundKey = Object.keys(dogData).find(key => topPrediction.includes(key));
-
-      if (foundKey) {
-        const dog = dogData[foundKey];
         dogVideo.src = dog.video;
-        interactionArea.style.display = "block";
-
-        document.getElementById("infoBtn").onclick = () => {
-          dogInfoDiv.innerHTML = `
-            <h3>🐾 品種：${dog.name}</h3>
-            <p>${dog.description}</p>
-          `;
+        dogVideo.style.display = "block";
+        infoBtn.style.display = "inline-block";
+        dogInfo.innerHTML = "";
+        infoBtn.onclick = () => {
+          dogInfo.innerHTML = `<h3>${dog.name}</h3><p>${dog.description}</p>`;
         };
-      } else {
-        interactionArea.style.display = "none";
-        dogInfoDiv.innerHTML = "無法辨識出已知的狗狗品種。";
-      }
+      });
     });
-
-    initCamera();
-    loadModel();
   </script>
 </body>
 </html>

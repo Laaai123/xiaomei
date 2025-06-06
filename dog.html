@@ -16,21 +16,18 @@
   <video id="dogVideo" controls></video>
   <button id="infoBtn">顯示狗狗資訊</button>
   <div id="dogInfo"></div>
-
   <a-scene mindar-image="imageTargetSrc: ./husky.mind; filtered: false;"
            vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
     <a-camera position="0 0 0"></a-camera>
     <!-- 只有一個目標，targetIndex 是 0 -->
     <a-entity mindar-image-target="targetIndex: 0"></a-entity>
   </a-scene>
-
   <script>
     const dogData = {
       name: "哈士奇",
       desc: "活潑雪橇犬，喜歡奔跑和玩耍。",
       video: "husky.mp4"
     };
-
     const video = document.getElementById("dogVideo");
     const btn = document.getElementById("infoBtn");
     const info = document.getElementById("dogInfo");
@@ -38,7 +35,6 @@
     document.addEventListener("DOMContentLoaded", () => {
       const scene = document.querySelector("a-scene").components["mindar-image"];
       scene.start();
-
       scene.el.addEventListener("targetFoundIndex0", () => {
         video.src = dogData.video;
         video.style.display = "block";
@@ -49,7 +45,6 @@
           info.style.display = "block";
         };
       });
-
       scene.el.addEventListener("targetLostIndex0", () => {
         video.pause();
         video.style.display = "none";

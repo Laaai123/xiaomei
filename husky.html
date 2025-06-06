@@ -38,8 +38,8 @@
 </head>
 <body>
   <!-- 互動按鈕與資訊區塊 -->
-  <button id="infoButton">顯示狗狗資訊</button>
-  <div id="infoBox"><strong>哈士奇</strong><p>活潑雪橇犬，喜歡奔跑和玩耍。</p></div>
+  <button id="infoButton">主人點點我</button>
+  <div id="infoBox"><strong>哈士奇</strong><p>暱稱二哈、月月，是北方地區雪橇型犬的總稱，他們的快速拉動的風格與其他雪橇犬不同。 他們是由速度最快的雪橇犬不斷交配的犬種。相比之下，阿拉斯加雪橇犬是「最大和最有力的」雪橇犬，常被用於較重的承載。哈士奇被用於雪橇犬拉車比賽。</p></div>
 
   <!-- AR 場景設定 -->
   <a-scene
@@ -64,11 +64,7 @@
         id="videoEntity"
         src="#huskyVid"
         width="1.2" height="0.675"  <!-- 16:9 畫面比例 -->
-        position="0 0 0"
-        autoplay="false"
-        loop="true"
-        material="shader: flat"
-      ></a-video>
+       </a-video>
     </a-entity>
   </a-scene>
 
@@ -103,7 +99,6 @@
       btn.style.display = "none";
       info.style.display = "none";
     });
-
     // 按下按鈕顯示資訊
     btn.onclick = () => {
       info.style.display = info.style.display === "none" ? "block" : "none";

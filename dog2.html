@@ -3,91 +3,101 @@
 <head>
   <meta charset="UTF-8" />
   <title>柴犬 狗狗介紹💕</title>
+  <!-- 載入 A-Frame 和 MindAR -->
   <script src="https://cdn.jsdelivr.net/npm/aframe@1.4.2/dist/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
   <style>
     body { margin: 0; overflow: hidden; }
-    #dogVideo, #infoBtn, #dogInfo {
-      display: none;
+    #infoButton {
       position: absolute;
-      z-index: 10;
-    }
-    #dogVideo {
-      bottom: 100px;
-      left: 20px;
-      width: 300px;
-      border-radius: 10px;
-    }
-    #infoBtn {
-      bottom: 60px;
-      left: 20px;
-      padding: 10px 16px;
-      background: #f77d0e;
-      color: white;
-      border: none;
-      border-radius: 6px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    #dogInfo {
       bottom: 20px;
       left: 20px;
-      background: rgba(255,255,255,0.95);
-      padding: 10px;
-      border-radius: 6px;
-      max-width: 300px;
-      color: #333;
+      padding: 12px 20px;
+      background-color: #2196F3;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      font-size: 16px;
+      z-index: 10;
+      display: none;
+    }
+    #infoBox {
+      position: absolute;
+      bottom: 80px;
+      left: 20px;
+      background-color: rgba(255,255,255,0.95);
+      padding: 10px 15px;
+      border-radius: 8px;
+      font-size: 16px;
+      color: #000;
+      z-index: 10;
+      display: none;
+      width: 280px;
     }
   </style>
 </head>
 <body>
-  <video id="dogVideo" controls playsinline></video>
-  <button id="infoBtn">主人點點我🥰</button>
-  <div id="dogInfo"></div>
+  <!-- 互動按鈕與資訊區塊 -->
+  <button id="infoButton">主人點點我</button>
+  <div id="infoBox"><strong>✨柴犬</strong><p>日本犬種之一。屬於中小型犬種。柴犬於1936年（昭和11年）12月16日被指定為日本的天然紀念物，亦是現存六種日本犬中其中一種小型犬。根據日本犬保存會，日本境內飼養的日本本土犬種裡，約有八成為柴犬。柴犬面貌與秋田犬相似，也因此兩者經常被搞混。細分的話，秋田臉較柴犬圓，柴犬的耳朵與嘴較秋田尖，不過兩者最明顯的差別是體型，柴犬比秋田明顯嬌小可愛。</p></div>
 
+  <!-- AR 場景設定 -->
   <a-scene
-    mindar-image="imageTargetSrc: dog2.mind; autoStart: true;"
+    mindar-image="imageTargetSrc: dog2.mind; autoStart: true; uiScanning: true;"
     color-space="sRGB"
-    embedded
+    renderer="colorManagement: true; physicallyCorrectLights: true"
     vr-mode-ui="enabled: false"
     device-orientation-permission-ui="enabled: false"
+    embedded
+    style="width: 100vw; height: 100vh;"
   >
     <a-assets>
-      <video id="vid" src="dog2.mp4" preload="auto" loop muted></video>
+      <!-- 放影片 -->
+      <video id="dog2Vid" src="dog2.mp4" preload="auto" loop muted playsinline></video>
     </a-assets>
     <a-light type="ambient" intensity="1.5"></a-light>
-    <a-camera look-controls="enabled: false" camera="facingMode: environment"></a-camera>
+    <a-camera position="0 0 0" look-controls="enabled: false" camera="facingMode: environment"></a-camera>
+
     <a-entity mindar-image-target="targetIndex: 0">
-      <a-video id="videoEntity" src="#vid" width="0.7" height="0.4" position="0 0 0" material="shader: flat"></a-video>
+      <a-video
+        id="videoEntity"
+        src="#dog2Vid"
+        width="1.2" height="0.675"  <!-- 16:9 畫面比例 -->
+       ></a-video>
     </a-entity>
   </a-scene>
-
+  <!-- 播放控制與資訊互動邏輯 -->
   <script>
-    const video = document.querySelector("#vid");
-    const videoDOM = document.getElementById("dogVideo");
-    const btn = document.getElementById("infoBtn");
-    const info = document.getElementById("dogInfo");
-
+    const video = document.querySelector("#dog2Vid");
+    const videoPlane = document.querySelector("#videoEntity");
     const target = document.querySelector("a-entity[mindar-image-target]");
-
+    const btn = document.getElementById("infoButton");
+    const info = document.getElementById("infoBox");
+    // 點擊影片切換播放 / 暫停
+    videoPlane.addEventListener("click", () => {
+      if (video.paused) {
+        video.play();
+      } else {
+        video.pause();
+      }
+    });
+    // 掃描到圖片
     target.addEventListener("targetFound", () => {
-      videoDOM.src = "dog2.mp4";
-      videoDOM.style.display = "block";
-      btn.style.display = "inline-block";
       video.play();
+      btn.style.display = "block";
+      info.style.display = "none";
     });
-
-    btn.addEventListener("click", () => {
-      info.innerHTML = "<strong>✨柴犬</strong><p>📢日本犬種之一。屬於中小型犬種。柴犬於1936年（昭和11年）12月16日被指定為日本的天然紀念物，亦是現存六種日本犬中其中一種小型犬。根據日本犬保存會，日本境內飼養的日本本土犬種裡，約有八成為柴犬。柴犬面貌與秋田犬相似，也因此兩者經常被搞混。細分的話，秋田臉較柴犬圓，柴犬的耳朵與嘴較秋田尖，不過兩者最明顯的差別是體型，柴犬比秋田明顯嬌小可愛。</p>";
-      info.style.display = "block";
-    });
-
+    // 圖片掃描消失
     target.addEventListener("targetLost", () => {
-      videoDOM.pause();
-      videoDOM.style.display = "none";
+      video.pause();
+      video.currentTime = 0;
       btn.style.display = "none";
       info.style.display = "none";
     });
+    // 按下按鈕顯示資訊
+    btn.onclick = () => {
+      info.style.display = info.style.display === "none" ? "block" : "none";
+    };
   </script>
 </body>
 </html>

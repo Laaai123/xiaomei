@@ -2,24 +2,55 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8" />
-  <title>哈士奇 AR 辨識互動</title>
+  <title>哈士奇 AR 辨識互動 (後置鏡頭)</title>
   <script src="https://cdn.jsdelivr.net/npm/aframe@1.5.0/dist/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
   <style>
-    #dogVideo, #infoBtn, #dogInfo { display: none; position: absolute; }
-    #dogVideo { bottom: 100px; left: 20px; width: 300px; }
-    #infoBtn { bottom: 60px; left: 20px; padding: 10px; background:#4CAF50; color:#fff; border:none; border-radius:5px; cursor: pointer;}
-    #dogInfo { bottom: 20px; left:20px; background:rgba(255,255,255,0.8); padding:10px; border-radius:5px; width: 300px;}
+    #dogVideo, #infoBtn, #dogInfo {
+      display: none;
+      position: absolute;
+      z-index: 10;
+    }
+    #dogVideo {
+      bottom: 100px;
+      left: 20px;
+      width: 300px;
+      border: 2px solid #333;
+      border-radius: 8px;
+    }
+    #infoBtn {
+      bottom: 60px;
+      left: 20px;
+      padding: 10px;
+      background:#4CAF50;
+      color:#fff;
+      border:none;
+      border-radius:5px;
+      cursor: pointer;
+    }
+    #dogInfo {
+      bottom: 20px;
+      left: 20px;
+      background: rgba(255,255,255,0.9);
+      padding: 10px;
+      border-radius: 5px;
+      width: 300px;
+      font-size: 16px;
+      color: #222;
+    }
   </style>
 </head>
 <body>
-  <video id="dogVideo" controls></video>
+  <video id="dogVideo" controls playsinline></video>
   <button id="infoBtn">顯示狗狗資訊</button>
   <div id="dogInfo"></div>
-  <a-scene mindar-image="imageTargetSrc: ./husky.mind; filtered: false;"
-           vr-mode-ui="enabled: false" device-orientation-permission-ui="enabled: false">
-    <a-camera position="0 0 0"></a-camera>
-    <!-- 只有一個目標，targetIndex 是 0 -->
+  <a-scene
+    mindar-image="imageTargetSrc: ./husky.mind; filtered: false; maxTrack: 1;"
+    vr-mode-ui="enabled: false"
+    device-orientation-permission-ui="enabled: false"
+    embedded >
+    <!-- 設定後置鏡頭 -->
+    <a-camera position="0 0 0" camera="facingMode: environment"></a-camera>
     <a-entity mindar-image-target="targetIndex: 0"></a-entity>
   </a-scene>
   <script>
@@ -31,15 +62,15 @@
     const video = document.getElementById("dogVideo");
     const btn = document.getElementById("infoBtn");
     const info = document.getElementById("dogInfo");
-
     document.addEventListener("DOMContentLoaded", () => {
       const scene = document.querySelector("a-scene").components["mindar-image"];
       scene.start();
       scene.el.addEventListener("targetFoundIndex0", () => {
         video.src = dogData.video;
         video.style.display = "block";
+        video.play();
         btn.style.display = "inline-block";
-        info.style.display = "none"; // 先隱藏資訊
+        info.style.display = "none";
         btn.onclick = () => {
           info.innerHTML = `<strong>${dogData.name}</strong><p>${dogData.desc}</p>`;
           info.style.display = "block";

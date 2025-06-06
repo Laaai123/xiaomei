@@ -41,7 +41,7 @@
     <br>
     <img id="image" src="dog.jpg" alt="dog.jpg" style="display:none;">
     <br>
-    <button id="identifyBtn" style="display:none;">識別品種</button>
+    <button id="identifyBtn" style="display:none;">小狗品種</button>
     <div id="result"></div>
 
     <script>
@@ -71,8 +71,8 @@
             const predictions = await model.classify(img);
             const topPrediction = predictions[0];
             document.getElementById('result').innerHTML = `
-                品種：${topPrediction.className}<br>
-                信心度：${(topPrediction.probability * 100).toFixed(2)}%
+                品種：${哈士奇}<br>
+                簡介：${哈士奇，暱稱二哈、月月，是北方地區雪橇型犬的總稱，他們的快速拉動的風格與其他雪橇犬不同。 他們是由速度最快的雪橇犬不斷交配的犬種。}%
             `;
         });
     </script>

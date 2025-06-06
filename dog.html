@@ -1,80 +1,122 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>小狗品種識別系統</title>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
-    <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet"></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            text-align: center;
-            margin: 20px;
-            background-color: #f4f4f9;
-        }
-        img {
-            max-width: 100%;
-            height: auto;
-            margin-top: 20px;
-        }
-        button {
-            padding: 10px 20px;
-            font-size: 16px;
-            cursor: pointer;
-            background-color: #4CAF50;
-            color: white;
-            border: none;
-            border-radius: 5px;
-            margin-top: 20px;
-        }
-        #result {
-            margin-top: 20px;
-            font-size: 18px;
-            color: #333;
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>小狗品種識別系統</title>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      background-color: #f4f4f9;
+      padding: 20px;
+    }
+    img, video {
+      max-width: 100%;
+      margin-top: 20px;
+    }
+    button {
+      padding: 10px 20px;
+      margin-top: 15px;
+      font-size: 16px;
+      background-color: #4CAF50;
+      color: white;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+    }
+    #dogInfo {
+      margin-top: 20px;
+      font-size: 18px;
+      color: #333;
+    }
+  </style>
 </head>
 <body>
-    <h1>小狗品種識別系統</h1>
-    <input type="file" id="imageInput" accept="image/*">
-    <br>
-    <img id="image" src="dog.jpg" alt="dog.jpg" style="display:none;">
-    <br>
-    <button id="identifyBtn" style="display:none;">小狗品種</button>
-    <div id="result"></div>
+  <h1>🐶 小狗品種識別系統</h1>
+  <input type="file" id="imageInput" accept="image/*" />
+  <br />
+  <img id="image" alt="上傳的圖片" style="display: none;" />
+  <br />
+  <button id="identifyBtn" style="display: none;">辨識小狗品種</button>
 
-    <script>
-        let model;
+  <div id="videoContainer" style="display: none;">
+    <h3>🐾 相關影片：</h3>
+    <video id="dogVideo" controls></video>
+  </div>
 
-        async function loadModel() {
-            model = await mobilenet.load();
-            console.log("模型加載成功！");
-        }
+  <div id="dogInfo"></div>
 
-        loadModel();
+  <script>
+    let model;
 
-        document.getElementById('imageInput').addEventListener('change', (e) => {
-            const file = e.target.files[0];
-            const reader = new FileReader();
-            reader.onload = function (event) {
-                const img = document.getElementById('image');
-                img.src = event.target.result;
-                img.style.display = 'block';
-                document.getElementById('identifyBtn').style.display = 'inline-block';
-            };
-            reader.readAsDataURL(file);
-        });
+    const dogData = {
+      "Siberian husky": {
+        name: "哈士奇",
+        description: "哈士奇，又稱二哈，是源自北方的雪橇犬，以活潑、好動、性格獨特著稱。",
+        video: "husky.mp4"
+      },
+      "golden retriever": {
+        name: "黃金獵犬",
+        description: "黃金獵犬聰明、友善，適合作為家庭寵物與導盲犬。",
+        video: "golden.mp4"
+      },
+      "labrador retriever": {
+        name: "拉布拉多",
+        description: "拉布拉多是非常友善且樂於助人的犬種，常用於搜救與輔助工作。",
+        video: "labrador.mp4"
+      }
+    };
 
-        document.getElementById('identifyBtn').addEventListener('click', async () => {
-            const img = document.getElementById('image');
-            const predictions = await model.classify(img);
-            const topPrediction = predictions[0];
-            document.getElementById('result').innerHTML = `
-                品種：${哈士奇}<br>
-                簡介：${哈士奇，暱稱二哈、月月，是北方地區雪橇型犬的總稱，他們的快速拉動的風格與其他雪橇犬不同。 他們是由速度最快的雪橇犬不斷交配的犬種。}%
-            `;
-        });
-    </script>
+    async function loadModel() {
+      model = await mobilenet.load();
+      console.log("模型載入成功！");
+    }
+
+    loadModel();
+
+    const imageInput = document.getElementById("imageInput");
+    const image = document.getElementById("image");
+    const identifyBtn = document.getElementById("identifyBtn");
+    const resultDiv = document.getElementById("dogInfo");
+    const videoContainer = document.getElementById("videoContainer");
+    const dogVideo = document.getElementById("dogVideo");
+
+    imageInput.addEventListener("change", (e) => {
+      const file = e.target.files[0];
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        image.src = event.target.result;
+        image.style.display = "block";
+        identifyBtn.style.display = "inline-block";
+        resultDiv.innerHTML = "";
+        videoContainer.style.display = "none";
+      };
+      reader.readAsDataURL(file);
+    });
+
+    identifyBtn.addEventListener("click", async () => {
+      const predictions = await model.classify(image);
+      const topPrediction = predictions[0].className.toLowerCase();
+      console.log("辨識結果：", topPrediction);
+
+      let foundKey = Object.keys(dogData).find(key => topPrediction.includes(key));
+
+      if (foundKey) {
+        const dog = dogData[foundKey];
+        resultDiv.innerHTML = `
+          <h3>📌 品種名稱：${dog.name}</h3>
+          <p>${dog.description}</p>
+        `;
+        dogVideo.src = dog.video;
+        videoContainer.style.display = "block";
+      } else {
+        resultDiv.innerHTML = "很抱歉，無法辨識這個小狗品種 😢";
+        videoContainer.style.display = "none";
+      }
+    });
+  </script>
 </body>
 </html>

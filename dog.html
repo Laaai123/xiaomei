@@ -1,0 +1,112 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>小狗識別系統</title>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-node"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 0;
+            background-color: #f4f4f9;
+        }
+        .container {
+            margin-top: 50px;
+        }
+        input[type="file"] {
+            margin: 20px;
+        }
+        img {
+            width: 300px;
+            height: auto;
+            margin-top: 20px;
+        }
+        button {
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            margin-top: 20px;
+        }
+        #result {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #333;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>小狗識別系統</h1>
+        <input type="file" id="imageInput" accept="image/*">
+        <br>
+        <img id="image" src="dog.jpg" alt="哈士奇圖片" style="display:none;">
+        <button onclick="recognizeDog()">識別圖片</button>
+        <div id="result"></div>
+    </div>
+
+    <script>
+        // 加載預訓練的 MobileNetV2 模型
+        let model;
+
+        async function loadModel() {
+            model = await tf.loadLayersModel('https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.0.0-rc.2/dist/tfjs-models/mobilenet_v2/model.json');
+            console.log("模型加載成功！");
+        }
+
+        loadModel();  // 加載模型
+
+        // 處理圖片並顯示
+        document.getElementById('imageInput').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            const reader = new FileReader();
+            reader.onload = function (event) {
+                const img = document.getElementById('image');
+                img.src = event.target.result;
+                img.style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+        });
+
+        // 識別小狗
+        async function recognizeDog() {
+            const imgElement = document.getElementById('image');
+            if (!imgElement.src) {
+                alert("請先選擇一張圖片！");
+                return;
+            }
+
+            // 預處理圖片
+            const img = tf.browser.fromPixels(imgElement);
+            const resizedImg = tf.image.resizeBilinear(img, [224, 224]);
+            const batchedImg = resizedImg.expandDims(0);
+            const normalizedImg = batchedImg.div(255.0);
+
+            // 預測
+            const predictions = await model.predict(normalizedImg).data();
+            const topClass = tf.argMax(predictions).dataSync()[0];
+
+            // 加載 ImageNet 的標籤
+            const classLabels = await fetch("https://storage.googleapis.com/download.tensorflow.org/data/imagenet_class_index.json")
+                .then(response => response.json());
+
+            const className = classLabels[topClass.toString()][1];
+            document.getElementById('result').innerHTML = `識別結果：${className}`;
+
+            // 判斷是否是狗
+            if (className.toLowerCase().includes("dog")) {
+                alert(`這是一隻狗！品種：${className}`);
+            } else {
+                alert("這不是一隻狗。");
+            }
+        }
+    </script>
+</body>
+</html>

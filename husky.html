@@ -1,122 +1,68 @@
 <!DOCTYPE html>
 <html lang="zh-TW">
 <head>
-  <meta charset="utf-8" />
-  <title>哈士奇 AR 互動</title>
+  <meta charset="utf-8">
+  <title>MindAR 影片互動測試</title>
   <script src="https://cdn.jsdelivr.net/npm/aframe@1.4.2/dist/aframe.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/mind-ar@1.2.5/dist/mindar-image-aframe.prod.js"></script>
   <style>
     body { margin: 0; overflow: hidden; }
-    #infoBtn, #dogInfo {
-      display: none;
-      position: absolute;
-      z-index: 10;
-      font-family: sans-serif;
-    }
-    #infoBtn {
-      bottom: 60px;
-      left: 20px;
-      padding: 10px 20px;
-      background: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 5px;
-      font-size: 16px;
-      cursor: pointer;
-    }
-    #dogInfo {
-      bottom: 20px;
-      left: 20px;
-      background: rgba(255, 255, 255, 0.9);
-      padding: 10px;
-      border-radius: 5px;
-      font-size: 16px;
-      color: #222;
-      width: 300px;
-    }
+    #infoBtn { display:none; position:absolute; bottom:60px; left:20px; padding:10px; background:#4CAF50; color:#fff; border:none; border-radius:5px; cursor:pointer; font-size:16px; }
+    #dogInfo { display:none; position:absolute; bottom:20px; left:20px; background:rgba(255,255,255,0.9); padding:10px; border-radius:5px; width:300px; }
   </style>
 </head>
 <body>
+  <button id="infoBtn">顯示資訊</button>
+  <div id="dogInfo"></div>
 
-<!-- 影片與按鈕顯示區 -->
-<video id="introVid" src="husky.mp4" preload="auto" loop muted playsinline style="display: none;"></video>
-<button id="infoBtn">顯示狗狗資訊</button>
-<div id="dogInfo"></div>
+  <a-scene mindar-image="imageTargetSrc: husky.mind; autoStart:true; uiScanning:true;"
+           embedded vr-mode-ui="enabled:false"
+           device-orientation-permission-ui="enabled:false">
 
-<!-- A-Frame 場景 -->
-<a-scene
-  mindar-image="imageTargetSrc: husky.mind; autoStart: true; uiScanning: true"
-  color-space="sRGB"
-  renderer="colorManagement: true; physicallyCorrectLights: true"
-  vr-mode-ui="enabled: false"
-  device-orientation-permission-ui="enabled: false"
-  embedded
->
-  <a-assets>
-    <video id="huskyVideo" src="husky.mp4" preload="auto" loop muted playsinline></video>
-  </a-assets>
+    <a-assets>
+      <video id="huskyVid" src="husky.mp4" preload="auto" muted playsinline></video>
+    </a-assets>
 
-  <a-light type="ambient" intensity="1.5"></a-light>
-  <a-camera look-controls="enabled: false" camera="facingMode: environment"></a-camera>
+    <a-camera camera="facingMode:environment" look-controls="enabled:false"></a-camera>
 
-  <a-entity mindar-image-target="targetIndex: 0">
-    <a-video
-      id="videoEntity"
-      src="#huskyVideo"
-      width="0.7"
-      height="1.2"
-      autoplay="false"
-      loop="true"
-      material="shader: flat"
-      position="0 0 0">
-    </a-video>
-  </a-entity>
-</a-scene>
+    <a-entity id="myTarget" mindar-image-target="targetIndex:0">
+      <a-video src="#huskyVid" width="0.7" height="1.2" material="shader:flat"></a-video>
+    </a-entity>
+  </a-scene>
 
-<!-- 腳本：播放影片、顯示資訊 -->
-<script>
-  const dogData = {
-    name: "哈士奇",
-    desc: "活潑雪橇犬，聰明、獨立又有點調皮！"
-  };
+  <script>
+    const btn = document.getElementById('infoBtn');
+    const info = document.getElementById('dogInfo');
+    const dogName = "哈士奇";
+    const dogDesc = "活潑雪橇犬，喜歡奔跑玩耍。";
 
-  const video = document.querySelector('#huskyVideo');
-  const videoPlane = document.querySelector('#videoEntity');
-  const infoBtn = document.getElementById("infoBtn");
-  const dogInfo = document.getElementById("dogInfo");
-  const targetEntity = document.querySelector('a-entity[mindar-image-target]');
+    document.addEventListener('DOMContentLoaded', () => {
+      const video = document.getElementById('huskyVid');
+      const target = document.getElementById('myTarget');
 
-  // 點擊影片切換播放狀態
-  videoPlane.addEventListener('click', () => {
-    if (video.paused) {
-      video.play();
-    } else {
-      video.pause();
-    }
-  });
+      // 嘗試預先 play 以避免 autoplay 限制
+      video.play().catch(() => { console.log("影片預載，等待 targetFound 再播放"); });
 
-  // 掃到圖卡 → 播放影片 + 顯示按鈕
-  targetEntity.addEventListener('targetFound', () => {
-    video.play();
-    infoBtn.style.display = "inline-block";
-    video.style.display = "block";
-    dogInfo.style.display = "none";
-  });
+      target.addEventListener('targetFound', () => {
+        console.log('找到 target，影片播放中');
+        video.play();
+        btn.style.display = 'inline-block';
+        info.style.display = 'none';
+      });
 
-  // 圖卡不見 → 全部隱藏
-  targetEntity.addEventListener('targetLost', () => {
-    video.pause();
-    video.currentTime = 0;
-    infoBtn.style.display = "none";
-    dogInfo.style.display = "none";
-    video.style.display = "none";
-  });
+      target.addEventListener('targetLost', () => {
+        console.log('target 離開，暫停影片');
+        video.pause();
+        video.currentTime = 0;
+        btn.style.display = 'none';
+        info.style.display = 'none';
+      });
 
-  // 點擊顯示狗狗資訊
-  infoBtn.addEventListener("click", () => {
-    dogInfo.innerHTML = `<strong>${dogData.name}</strong><p>${dogData.desc}</p>`;
-    dogInfo.style.display = "block";
-  });
-</script>
+      btn.addEventListener('click', () => {
+        info.innerHTML = `<strong>${dogName}</strong><p>${dogDesc}</p>`;
+        info.style.display = 'block';
+      });
+    });
+  </script>
 </body>
 </html>

@@ -1,138 +1,61 @@
 <!DOCTYPE html>
-<html lang="zh-TW">
+<html>
 <head>
   <meta charset="UTF-8">
-  <title>狗狗辨識互動展示</title>
+  <title>掃描狗狗圖片 AR 系統</title>
+  <script src="https://unpkg.com/mind-ar@1.1.4/dist/mindar-image.prod.js"></script>
   <style>
-    body {
-      text-align: center;
-      font-family: Arial;
-      background-color: #f5f5f5;
-      padding: 20px;
-    }
-    video#camera {
-      width: 100%;
-      max-width: 400px;
-      border: 3px solid #4CAF50;
-      border-radius: 10px;
-    }
-    #dogVideo {
-      display: none;
-      width: 100%;
-      max-width: 400px;
-      margin-top: 15px;
-      border-radius: 10px;
-    }
-    #infoBtn {
-      display: none;
-      margin-top: 15px;
-      padding: 10px 20px;
-      font-size: 16px;
-      background-color: #4CAF50;
-      color: white;
-      border: none;
-      border-radius: 5px;
-    }
-    #dogInfo {
-      margin-top: 15px;
-      font-size: 18px;
-    }
+    body { margin: 0; overflow: hidden; font-family: Arial; }
+    #infoBtn { display: none; position: absolute; bottom: 20px; left: 20px; padding: 10px; background: #4CAF50; color: #fff; border: none; border-radius: 5px; }
+    #dogInfo { display: none; position: absolute; bottom: 60px; left: 20px; background: rgba(255,255,255,0.8); padding: 10px; border-radius: 5px; }
   </style>
 </head>
 <body>
-  <h2>請將後鏡頭對準指定狗狗圖片</h2>
-
-  <video id="camera" autoplay playsinline muted></video>
-
-  <video id="dogVideo" controls></video>
-  <br>
+  <video id="dogVideo" width="300" controls style="position:absolute; bottom:120px; left:20px; display:none;"></video>
   <button id="infoBtn">顯示狗狗資訊</button>
   <div id="dogInfo"></div>
 
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow/tfjs@3.21.0"></script>
-  <script src="https://cdn.jsdelivr.net/npm/@tensorflow-models/mobilenet@2.1.0"></script>
-
   <script>
     const dogData = {
-      husky: {
-        name: "哈士奇",
-        description: "哈士奇是來自北極的雪橇犬，活潑、外型帥氣。",
-        video: "husky.mp4"
-      },
-      golden: {
-        name: "黃金獵犬",
-        description: "黃金獵犬溫和親人，是家庭最愛的狗狗之一。",
-        video: "golden.mp4"
-      }
+      husky: { name: "哈士奇", desc: "北極雪橇犬，活潑有型。", video: "husky.mp4" },
+      dog2:  { name: "柴犬", desc: "日本品種，個性傲嬌。", video: "dog2.mp4" },
+      dog3:  { name: "吉娃娃", desc: "迷你玩伴，小隻精。", video: "dog3.mp4" },
+      beagle:{ name: "比格犬", desc: "嗅覺敏銳，活力足。", video: "beagle.mp4" },
+      doberman:{name:"杜賓狗", desc:"護衛犬種，敏捷強壯。", video:"doberman.mp4" },
+      golden:{name:"黃金獵犬", desc:"溫和友善，適合家庭。", video:"golden.mp4" },
+      mix:   { name: "迷克斯", desc: "混種犬，多樣性格。", video: "mix.mp4" }
     };
 
-    const knownLabels = {
-      'Siberian husky': 'husky',
-      'golden retriever': 'golden'
-    };
+    document.addEventListener("DOMContentLoaded", async () => {
+      const mindar = new window.MINDAR.IMAGE.MindARThree({ container: document.body, imageTargetSrc: 'hungry_and_others.mind' });
+      const { renderer, camera, scene } = mindar;
+      await mindar.start();
 
-    const video = document.getElementById('camera');
-    const dogVideo = document.getElementById('dogVideo');
-    const infoBtn = document.getElementById('infoBtn');
-    const dogInfo = document.getElementById('dogInfo');
+      mindar.onTargetFound = ({ index }) => {
+        const key = Object.keys(dogData)[index];
+        const dog = dogData[key];
+        const video = document.getElementById("dogVideo");
+        const infoBtn = document.getElementById("infoBtn");
+        const dogInfo = document.getElementById("dogInfo");
 
-    let model;
-
-    async function init() {
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({
-          video: { facingMode: { exact: "environment" } }, // 強制後鏡頭
-          audio: false
-        });
-        video.srcObject = stream;
-
-        model = await mobilenet.load();
-        console.log("模型載入成功");
-
-        startClassification();
-      } catch (error) {
-        alert("無法啟用後鏡頭，請確認設備支援或權限設定。");
-        console.error(error);
-      }
-    }
-
-    async function startClassification() {
-      const canvas = document.createElement('canvas');
-      const ctx = canvas.getContext('2d');
-
-      setInterval(async () => {
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        ctx.drawImage(video, 0, 0);
-
-        const predictions = await model.classify(canvas);
-        if (predictions.length > 0) {
-          const label = predictions[0].className;
-          const match = Object.keys(knownLabels).find(key =>
-            label.toLowerCase().includes(key.toLowerCase())
-          );
-
-          if (match) {
-            const breedKey = knownLabels[match];
-            showDogContent(breedKey);
-          }
-        }
-      }, 1500); // 每1.5秒進行一次辨識
-    }
-
-    function showDogContent(breedKey) {
-      const dog = dogData[breedKey];
-      if (!dog) return;
-
-      dogVideo.src = dog.video;
-      dogVideo.style.display = 'block';
-      infoBtn.style.display = 'inline-block';
-      infoBtn.onclick = () => {
-        dogInfo.innerHTML = `<h3>${dog.name}</h3><p>${dog.description}</p>`;
+        video.src = dog.video; video.style.display = "block";
+        infoBtn.style.display = "inline-block";
+        infoBtn.onclick = () => {
+          dogInfo.innerHTML = `<strong>${dog.name}</strong><p>${dog.desc}</p>`;
+          dogInfo.style.display = "block";
+        };
       };
-    }
 
-    init();
+      mindar.onTargetLost = () => {
+        document.getElementById("dogVideo").style.display = "none";
+        document.getElementById("infoBtn").style.display = "none";
+        document.getElementById("dogInfo").style.display = "none";
+      };
+
+      renderer.setAnimationLoop(() => {
+        renderer.render(scene, camera);
+      });
+    });
   </script>
 </body>
 </html>
